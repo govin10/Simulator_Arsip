@@ -9,4 +9,4 @@ export async function middleware(req: NextRequest) {
   if (p.startsWith("/siswa") && user.role !== "STUDENT") return NextResponse.redirect(new URL("/guru", req.url));
   return NextResponse.next();
 }
-export const config = { matcher: ["/siswa/:path*", "/guru/:path*"] };
+export const config = { matcher: ["/siswa/:path*", "/guru/:path*", "/akun"] };

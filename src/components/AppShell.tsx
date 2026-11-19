@@ -21,7 +21,7 @@ export default function AppShell({ user, children, wide }: { user: SessionUser; 
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">
-            <span className="text-stone-600">{user.name} <span className="badge bg-stone-100 text-stone-600">{user.role === "STUDENT" ? "Siswa" : user.role === "ADMIN" ? "Admin" : "Guru"}</span></span>
+            <Link href="/akun" className="text-stone-600 hover:underline" title="Ganti kata sandi">{user.name} <span className="badge bg-stone-100 text-stone-600">{user.role === "STUDENT" ? "Siswa" : user.role === "ADMIN" ? "Admin" : "Guru"}</span></Link>
             <LogoutButton />
           </div>
         </div>

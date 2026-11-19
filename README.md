@@ -31,7 +31,12 @@ npm run db:seed             # data contoh (MENGHAPUS data yang ada)
 npm run dev                 # http://localhost:3000
 ```
 
-Akun contoh: `admin/admin123`, `guru/guru123`, `siswa01`…`siswa05/siswa123` (XI MP 1), `siswa06/siswa123` (XI MP 2). **Ganti semua kata sandi sebelum dipakai di kelas.**
+Akun contoh: `admin/admin123`, `guru/guru123`, `siswa01`…`siswa05/siswa123` (XI MP 1), `siswa06/siswa123` (XI MP 2). **Ganti semua kata sandi sebelum dipakai di kelas:**
+
+- **Kata sandi sendiri** (semua peran): klik nama Anda di kanan atas → halaman *Ganti kata sandi*.
+- **Siswa**: guru membuka *Kelas & akun* → *Reset sandi* (dibuat acak), atau impor CSV dengan kolom `password` berisi kata sandi pilihan.
+- **Guru/admin lain**: admin membuka *Kelas & akun* → bagian *Akun guru* → *reset sandi*.
+- Akun siswa contoh (`siswa01`–`siswa06`) sebaiknya dihapus dan diganti daftar siswa asli lewat impor CSV.
 
 Paket contoh: Paket A (tes awal, abjad), Paket B (tes akhir setara, abjad), dan latihan sistem nomor, subjek, wilayah, tanggal.
 
