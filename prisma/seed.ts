@@ -191,6 +191,11 @@ const TANGGAL_TASKS: TaskIn[] = [
 ];
 
 async function main() {
+  // --if-empty: dipakai saat build Vercel; hanya mengisi data contoh bila database belum punya akun
+  if (process.argv.includes("--if-empty") && (await db.user.count()) > 0) {
+    console.log("Database sudah berisi data; seed dilewati.");
+    return;
+  }
   await db.$transaction([
     db.errorLog.deleteMany(), db.event.deleteMany(), db.retrievalResult.deleteMany(), db.attempt.deleteMany(),
     db.practiceSession.deleteMany(), db.retrievalTask.deleteMany(), db.document.deleteMany(), db.package.deleteMany(),

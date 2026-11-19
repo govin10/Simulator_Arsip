@@ -41,9 +41,11 @@ Akun contoh: `admin/admin123`, `guru/guru123`, `siswa01`…`siswa05/siswa123` (X
 Paket contoh: Paket A (tes awal, abjad), Paket B (tes akhir setara, abjad), dan latihan sistem nomor, subjek, wilayah, tanggal.
 
 ## Deploy ke Vercel
-1. Buat database Postgres (Vercel Postgres / Neon / Supabase), salin connection string.
-2. Import repo ke Vercel, set environment variable `DATABASE_URL` dan `AUTH_SECRET` (string acak ≥ 32 karakter).
-3. Sekali dari komputer: `DATABASE_URL=... npx prisma db push` lalu `DATABASE_URL=... npm run db:seed`.
+1. Import repo ke Vercel (Add New → Project), tambahkan env `AUTH_SECRET` (string acak ≥ 32 karakter).
+2. Tab **Storage → Create Database → Neon**, region Singapore, hubungkan ke project (otomatis menambah `DATABASE_URL`).
+3. **Redeploy.** Saat build, `npm run db:setup` otomatis membuat/memperbarui tabel (`prisma db push`) dan mengisi data contoh **hanya bila database masih kosong** — data yang sudah ada tidak pernah dihapus.
+
+Catatan: perubahan skema yang menghapus kolom/tabel akan membuat build gagal (pengaman dari kehilangan data); jalankan `npx prisma db push --accept-data-loss` secara manual bila memang disengaja.
 
 ## Hal yang perlu dikonfirmasi guru (PRD bagian 10)
 Kaidah di kunci contoh adalah **usulan** dan bisa diubah di editor paket:
