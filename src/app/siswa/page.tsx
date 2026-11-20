@@ -2,7 +2,7 @@ import AppShell from "@/components/AppShell";
 import Uploader from "@/components/siswa/Uploader";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { storageMode } from "@/lib/storage";
+import { blobAccess, storageMode } from "@/lib/storage";
 import { STATUS_LABEL, canSubmit, fmtSize, fmtWib, isLate } from "@/lib/tugas";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +59,7 @@ export default async function StudentHome() {
 
               <div className="mt-4">
                 {can.ok ? (
-                  <Uploader assignmentId={a.id} studentId={user.id} mode={mode} replacing={!!sub} />
+                  <Uploader assignmentId={a.id} studentId={user.id} mode={mode} access={blobAccess()} replacing={!!sub} />
                 ) : (
                   !sub && <p className="text-sm text-stone-500">{can.reason}</p>
                 )}

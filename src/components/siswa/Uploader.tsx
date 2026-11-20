@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { MAX_PDF_BYTES, MAX_PDF_MB, fmtSize } from "@/lib/tugas";
 
-export default function Uploader({ assignmentId, studentId, mode, replacing }: { assignmentId: string; studentId: string; mode: "blob" | "local"; replacing: boolean }) {
+export default function Uploader({ assignmentId, studentId, mode, access, replacing }: { assignmentId: string; studentId: string; mode: "blob" | "local"; access: "public" | "private"; replacing: boolean }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -26,7 +26,7 @@ export default function Uploader({ assignmentId, studentId, mode, replacing }: {
       if (mode === "blob") {
         const safe = file.name.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/(\.pdf)?$/i, ".pdf");
         const blob = await upload(`tugas/${assignmentId}/${studentId}/${safe}`, file, {
-          access: "public", handleUploadUrl: "/api/upload", clientPayload: assignmentId, contentType: "application/pdf", multipart: file.size > 5 * 1024 * 1024,
+          access, handleUploadUrl: "/api/upload", clientPayload: assignmentId, contentType: "application/pdf", multipart: file.size > 5 * 1024 * 1024,
           onUploadProgress: (e) => setPct(Math.round(e.percentage)),
         });
         const r = await fetch("/api/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentId, url: blob.url, fileName: file.name }) });

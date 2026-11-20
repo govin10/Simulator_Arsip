@@ -1,6 +1,6 @@
 import { apiHandler, apiUser } from "@/lib/auth";
 import { loadVisibleSubmission } from "@/lib/submissions";
-import { readLocal } from "@/lib/storage";
+import { blobFileResponse, readLocal } from "@/lib/storage";
 
 // Membuka PDF (hanya pemilik atau guru kelasnya). Alamat asli file tidak ditampilkan di halaman.
 export const GET = apiHandler(async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
@@ -12,5 +12,5 @@ export const GET = apiHandler(async (_req: Request, ctx: { params: Promise<{ id:
       headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${encodeURIComponent(s.fileName)}"`, "Cache-Control": "private, no-store" },
     });
   }
-  return Response.redirect(s.fileKey, 302);
+  return blobFileResponse(s.fileKey, s.fileName);
 });
