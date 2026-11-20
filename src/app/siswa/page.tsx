@@ -1,65 +1,79 @@
-import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import StartButton from "@/components/student/StartButton";
+import Uploader from "@/components/siswa/Uploader";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { kindLabel, stageLabel, systemLabel } from "@/lib/domain";
+import { storageMode } from "@/lib/storage";
+import { STATUS_LABEL, canSubmit, fmtSize, fmtWib, isLate } from "@/lib/tugas";
+
+export const dynamic = "force-dynamic";
 
 export default async function StudentHome() {
   const user = await requireUser(["STUDENT"]);
-  const sessions = user.classroomId
-    ? await db.practiceSession.findMany({
-        where: { classroomId: user.classroomId, active: true },
-        include: { package: { include: { _count: { select: { documents: true, retrievalTasks: true } } } }, attempts: { where: { studentId: user.id }, orderBy: { attemptNo: "asc" } } },
-        orderBy: { createdAt: "desc" },
+  const me = await db.user.findUnique({ where: { id: user.id }, include: { classroom: true } });
+  const assignments = me?.classroomId
+    ? await db.assignment.findMany({
+        where: { classroomId: me.classroomId },
+        include: { submissions: { where: { studentId: user.id } } },
+        orderBy: [{ dueAt: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }],
       })
     : [];
+  const mode = storageMode();
+  const pending = assignments.filter((a) => !a.submissions[0] && canSubmit(a, null).ok).length;
+
   return (
     <AppShell user={user}>
-      <h1 className="h1">Sesi praktik</h1>
-      <p className="muted mt-1">Pilih sesi yang diaktifkan guru. Jawabanmu tersimpan otomatis; kamu bisa melanjutkan bila koneksi terputus.</p>
-      {!sessions.length && <div className="card mt-6 p-6 text-stone-600">Belum ada sesi aktif untuk kelasmu. Tunggu guru mengaktifkan sesi.</div>}
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {sessions.map((s) => {
-          const running = s.attempts.find((a) => a.status === "IN_PROGRESS");
-          const left = s.package.maxAttempts - s.attempts.length;
+      <h1 className="h1">Tugas saya</h1>
+      <p className="muted mt-1">Kelas {me?.classroom?.name ?? "-"} · {pending ? `${pending} tugas belum dikumpulkan` : "Semua tugas yang dibuka sudah dikumpulkan"}</p>
+      {!assignments.length && <div className="card mt-6 p-6 text-stone-600">Belum ada tugas dari guru untuk kelasmu.</div>}
+      <div className="mt-6 space-y-4">
+        {assignments.map((a) => {
+          const sub = a.submissions[0];
+          const can = canSubmit(a, sub);
+          const overdue = a.dueAt && new Date() > a.dueAt;
           return (
-            <div key={s.id} className="card flex flex-col p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="h2">{s.title}</h2>
-                  <p className="muted">{s.package.title}</p>
+            <article key={a.id} className="card p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="h2">{a.title}</h2>
+                  <p className={`text-sm ${overdue && !sub ? "font-medium text-red-700" : "text-stone-600"}`}>
+                    Tenggat: {a.dueAt ? fmtWib(a.dueAt) : "tidak ada"}{!a.isOpen && " · pengumpulan ditutup"}
+                  </p>
                 </div>
-                <span className={`badge ${s.package.kind === "LATIHAN" ? "bg-sky-100 text-sky-800" : "bg-amber-100 text-amber-800"}`}>{kindLabel(s.package.kind)}</span>
+                <Badge status={sub?.status} />
               </div>
-              <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                <div><dt className="text-xs text-stone-500">Sistem</dt><dd className="font-medium">{systemLabel(s.package.system)}</dd></div>
-                <div><dt className="text-xs text-stone-500">Dokumen</dt><dd className="font-medium">{s.package._count.documents}</dd></div>
-                <div><dt className="text-xs text-stone-500">Sisa percobaan</dt><dd className="font-medium">{running ? "—" : Math.max(0, left)}</dd></div>
-              </dl>
-              {s.attempts.length > 0 && (
-                <ul className="mt-3 space-y-1 border-t border-stone-100 pt-3 text-sm">
-                  {s.attempts.map((a) => (
-                    <li key={a.id} className="flex items-center justify-between">
-                      <span>Percobaan {a.attemptNo}: {a.status === "FINISHED" ? "selesai" : stageLabel(a.stage)}</span>
-                      {a.status === "FINISHED" && <Link className="text-brand-700 underline" href={`/siswa/percobaan/${a.id}/hasil`}>Lihat hasil {a.scores ? `(${(a.scores as { total: number }).total})` : ""}</Link>}
-                    </li>
-                  ))}
-                </ul>
+              {a.description && <p className="mt-3 whitespace-pre-line text-sm">{a.description}</p>}
+
+              {sub && (
+                <div className="mt-4 rounded-lg border border-stone-200 p-3 text-sm">
+                  <p>
+                    <a className="font-medium text-brand-700 underline" href={`/api/submissions/${sub.id}/file`} target="_blank" rel="noopener">📄 {sub.fileName}</a>
+                    <span className="text-stone-500"> · {fmtSize(sub.fileSize)} · dikumpulkan {fmtWib(sub.submittedAt, false)}</span>
+                    {isLate(a, sub.submittedAt) && <span className="badge ml-2 bg-amber-100 text-amber-800">Terlambat</span>}
+                  </p>
+                  {sub.status === "GRADED" && (
+                    <p className="mt-2 text-base">Nilai: <strong className="text-2xl">{sub.score}</strong> <span className="text-stone-500">/ {a.maxScore}</span></p>
+                  )}
+                  {sub.feedback && <p className={`mt-2 whitespace-pre-line rounded p-2 ${sub.status === "REVISION" ? "bg-amber-50 text-amber-900" : "bg-stone-50"}`}><strong>Catatan guru:</strong> {sub.feedback}</p>}
+                </div>
               )}
-              <div className="mt-auto pt-4">
-                {running ? (
-                  <Link href={`/siswa/percobaan/${running.id}`} className="btn btn-primary w-full">Lanjutkan percobaan {running.attemptNo}</Link>
-                ) : left > 0 ? (
-                  <StartButton sessionId={s.id} label={s.attempts.length ? "Ulangi dengan urutan baru" : "Mulai"} />
+
+              <div className="mt-4">
+                {can.ok ? (
+                  <Uploader assignmentId={a.id} studentId={user.id} mode={mode} replacing={!!sub} />
                 ) : (
-                  <p className="text-sm text-stone-500">Batas percobaan tercapai.</p>
+                  !sub && <p className="text-sm text-stone-500">{can.reason}</p>
                 )}
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
     </AppShell>
   );
+}
+
+function Badge({ status }: { status?: string }) {
+  if (!status) return <span className="badge bg-stone-200 text-stone-700">Belum dikumpulkan</span>;
+  const c = status === "GRADED" ? "bg-brand-100 text-brand-800" : status === "REVISION" ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-800";
+  return <span className={`badge ${c}`}>{STATUS_LABEL[status]}</span>;
 }

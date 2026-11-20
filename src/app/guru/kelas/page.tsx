@@ -11,8 +11,8 @@ export default async function ClassesPage() {
   return (
     <AppShell user={user}>
       <h1 className="h1">Kelas & akun</h1>
-      <p className="muted">Akun siswa dibuat guru (impor CSV atau satu per satu). Guru hanya melihat kelasnya sendiri.</p>
-      <ClassManager isAdmin={user.role === "ADMIN"} teachers={teachers}
+      <p className="muted">Siswa mendaftar sendiri di halaman Daftar dan mengisi kelasnya. Di sini Anda bisa merapikan kelas, memindahkan siswa yang salah kelas, dan mereset kata sandi.</p>
+      <ClassManager isAdmin={user.role === "ADMIN"} teachers={teachers} myId={user.id}
         classes={classes.map((c) => ({ id: c.id, name: c.name, teacherId: c.teacherId, teacher: c.teacher?.name ?? "-", students: c.students }))} />
     </AppShell>
   );

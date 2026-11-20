@@ -1,58 +1,47 @@
-# Simulator Klasifikasi, Penyimpanan, dan Temu Kembali Arsip Digital
+# Tugas Arsip — Pengumpulan & Penilaian Tugas Kearsipan
 
-Website simulator kearsipan untuk siswa XI Manajemen Perkantoran SMK Negeri 1 Pasuruan. Siswa **mengerjakan** pekerjaan arsip: identifikasi → klasifikasi, indeks & kode → kartu kendali → menyimpan di lemari virtual → temu kembali bertimer → skenario kesalahan. Guru melihat skor per indikator, kesalahan tersering, serta perbandingan tes awal dan tes akhir.
+Website untuk kelas XI Manajemen Perkantoran SMK Negeri 1 Pasuruan. Soal diberikan guru **di kertas**; siswa mengerjakan, memindai menjadi **PDF**, lalu mengumpulkannya di website. Guru mengoreksi PDF langsung di browser dan memberi nilai serta catatan.
 
-## Fitur (sesuai PRD)
+## Alur
+**Siswa**
+1. *Daftar* (nama, kelas, username, kata sandi). Kelas yang belum ada dibuat otomatis; penulisan dirapikan (`xi mp1` → `XI MP 1`).
+2. Melihat tugas kelasnya beserta tenggat, mengunggah PDF (maks. 20 MB, ada progress bar, bisa dari HP).
+3. Melihat nilai dan catatan guru. Bila guru *mengembalikan untuk revisi*, siswa bisa mengunggah ulang.
 
-| PRD | Implementasi |
-|---|---|
-| F1 Paket dokumen | Bank paket, 8–20 dokumen fiktif, dokumen "sengaja mirip/tidak lengkap", urutan diacak per percobaan |
-| F2 Klasifikasi | 5 sistem (abjad, nomor, subjek, wilayah, tanggal); sistem bisa dikunci per paket; sistem, kata tangkap, kode dinilai terpisah |
-| F3 Indeks & kode | Toleransi huruf besar-kecil, spasi, tanda baca; jawaban alternatif (sinonim) dari kunci guru; diagnosis khusus (PT di depan, urutan nama orang, gelar, arah surat masuk/keluar) |
-| F4 Lemari virtual | Laci → guide → folder → subfolder; drag-and-drop (mouse & sentuh) + menu "Simpan ke…" tanpa seret; atur urutan ↑↓; tidak ada tanda benar/salah sebelum dikirim |
-| F5 Kartu kendali | 9 kolom; guru menyalakan/mematikan kolom per paket; kosong vs salah dicatat terpisah; konsistensi kode/lokasi diperiksa |
-| F6 Temu kembali | Timer dari server, setiap langkah tercatat (buka laci/folder/dokumen, cari register), permintaan "arsip tidak ada" |
-| F7 Skenario kesalahan | Dibangkitkan otomatis dari kunci: folder salah, kode salah, ganda, metadata kosong, urutan salah (jumlah diatur guru); temuan benar / penyebab / perbaikan / laporan keliru |
-| F8 Umpan balik | Setiap aturan punya kode kesalahan + templat pesan; tampil setelah tahap dikirim; tidak memberi jawaban lengkap |
-| F9 Penilaian | 9 komponen dengan bobot yang bisa diubah; skor waktu hanya dihitung bila akurasi ≥ ambang; kemandirian dikurangi bantuan & percobaan ulang; setiap skor bisa ditelusuri ke butirnya |
-| F10 Dashboard guru | Filter kelas/sesi, skor per indikator, kesalahan tersering, progres siswa, tes awal vs akhir, ekspor CSV (bisa dianonimkan), rubrik & nilai akhir guru dengan catatan |
+**Guru**
+1. *Tugas & koreksi* → buat tugas (judul, petunjuk, tenggat, nilai maksimal, terima terlambat atau tidak) untuk satu atau beberapa kelas sekaligus.
+2. Buka tugas → daftar siswa (sudah/belum kumpul, terlambat) → PDF tampil di halaman → isi nilai & catatan → *Simpan & berikutnya* (atau tekan Enter). Bisa *Kembalikan untuk revisi*.
+3. *Rekap nilai* → tabel siswa × tugas per kelas, rata-rata, ekspor CSV (bisa dibuka di Excel).
+4. *Kelas & akun* → pindahkan siswa yang salah kelas, hapus kelas kosong (salah ketik), reset kata sandi, hapus akun.
 
-Integritas: kunci jawaban **tidak pernah dikirim ke browser siswa**; semua pemeriksaan di server. Jawaban tersimpan otomatis ke server (dan cadangan di perangkat) sehingga sesi dapat dilanjutkan.
+File PDF hanya bisa dibuka oleh siswa pemiliknya dan guru kelasnya; alamat asli file tidak ditampilkan di halaman.
 
 ## Teknologi
-Next.js 15 (App Router) · TypeScript · Tailwind · Prisma + PostgreSQL · @dnd-kit · login JWT (cookie httpOnly).
+Next.js 15 · TypeScript · Tailwind · Prisma + PostgreSQL (Neon) · Vercel Blob (penyimpanan PDF).
 
-## Menjalankan secara lokal
+## Deploy ke Vercel
+1. Import repo ke Vercel (Add New → Project). Tambahkan env `AUTH_SECRET` (teks acak ≥ 32 karakter).
+2. Tab **Storage → Create Database → Neon** (region Singapore) → hubungkan ke project → otomatis menambah `DATABASE_URL`.
+3. Tab **Storage → Create → Blob** → hubungkan ke project → otomatis menambah `BLOB_READ_WRITE_TOKEN`.
+4. **Redeploy.** Saat build, `npm run db:setup` otomatis:
+   - menghapus tabel simulator versi lama bila masih ada (`prisma/cleanup.sql`),
+   - membuat/memperbarui tabel (`prisma db push`),
+   - mengisi data awal **hanya bila database masih kosong** (data yang ada tidak pernah dihapus).
+
+Tanpa `BLOB_READ_WRITE_TOKEN`, unggahan di Vercel akan gagal dengan pesan "Penyimpanan file belum diatur".
+
+## Menjalankan di komputer
 ```bash
 cp .env.example .env        # isi DATABASE_URL dan AUTH_SECRET
 npm install
-npx prisma db push          # buat tabel
-npm run db:seed             # data contoh (MENGHAPUS data yang ada)
+npm run db:setup
 npm run dev                 # http://localhost:3000
 ```
+Tanpa token Blob, PDF disimpan di folder `.uploads/` (hanya untuk percobaan lokal).
 
-Akun contoh: `admin/admin123`, `guru/guru123`, `siswa01`…`siswa05/siswa123` (XI MP 1), `siswa06/siswa123` (XI MP 2). **Ganti semua kata sandi sebelum dipakai di kelas:**
+## Akun awal
+Bila database kosong saat pertama deploy: `admin/admin123`, `guru/guru123`, dan siswa contoh `siswa01/siswa123` (XI MP 1). **Segera ganti kata sandi** (klik nama di kanan atas) dan hapus akun siswa contoh.
 
-- **Kata sandi sendiri** (semua peran): klik nama Anda di kanan atas → halaman *Ganti kata sandi*.
-- **Siswa**: guru membuka *Kelas & akun* → *Reset sandi* (dibuat acak), atau impor CSV dengan kolom `password` berisi kata sandi pilihan.
-- **Guru/admin lain**: admin membuka *Kelas & akun* → bagian *Akun guru* → *reset sandi*.
-- Akun siswa contoh (`siswa01`–`siswa06`) sebaiknya dihapus dan diganti daftar siswa asli lewat impor CSV.
-
-Paket contoh: Paket A (tes awal, abjad), Paket B (tes akhir setara, abjad), dan latihan sistem nomor, subjek, wilayah, tanggal.
-
-## Deploy ke Vercel
-1. Import repo ke Vercel (Add New → Project), tambahkan env `AUTH_SECRET` (string acak ≥ 32 karakter).
-2. Tab **Storage → Create Database → Neon**, region Singapore, hubungkan ke project (otomatis menambah `DATABASE_URL`).
-3. **Redeploy.** Saat build, `npm run db:setup` otomatis membuat/memperbarui tabel (`prisma db push`) dan mengisi data contoh **hanya bila database masih kosong** — data yang sudah ada tidak pernah dihapus.
-
-Catatan: perubahan skema yang menghapus kolom/tabel akan membuat build gagal (pengaman dari kehilangan data); jalankan `npx prisma db push --accept-data-loss` secara manual bila memang disengaja.
-
-## Hal yang perlu dikonfirmasi guru (PRD bagian 10)
-Kaidah di kunci contoh adalah **usulan** dan bisa diubah di editor paket:
-- Abjad: nama orang → nama akhir dulu (`Santoso, Budi`); badan usaha → bentuk usaha di akhir (`Surya Abadi, PT`); gelar di belakang dalam kurung; kode = huruf awal; urutan dalam folder = abjad indeks lalu tanggal.
-- Nomor: klasifikasi desimal kantor 000–400 (folder 010…430); urutan = tanggal menaik.
-- Subjek: UM/KU/KP/PL/PM dengan sub-subjek .1–.3; urutan = tanggal.
-- Wilayah: laci provinsi, guide kota, folder A–L / M–Z; indeks `Kota – Nama`.
-- Tanggal: laci tahun, guide triwulan, folder bulan; kode `2026.02`.
-- KKM 75, target temu kembali 120 detik, ambang akurasi untuk skor waktu 60%, pengurangan kemandirian 10/bantuan dan 15/percobaan ulang.
-- Akun siswa dibuat guru (impor CSV `nama,username,password,kelas`).
+- **Kata sandi sendiri:** klik nama di kanan atas → *Ganti kata sandi*.
+- **Siswa lupa kata sandi:** guru → *Kelas & akun* → *Reset sandi*.
+- **Guru/admin lain:** admin → *Kelas & akun* → bagian *Akun guru*.

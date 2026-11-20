@@ -16,9 +16,9 @@ export async function requireUser(roles?: SessionUser["role"][]) {
 }
 export const isStaff = (u: SessionUser) => u.role === "TEACHER" || u.role === "ADMIN";
 
-/** Kelas yang boleh dilihat: guru hanya kelasnya, admin semua. */
+/** Kelas yang boleh dilihat: guru melihat kelasnya + kelas tanpa guru (dibuat saat siswa mendaftar); admin semua. */
 export async function visibleClassIds(u: SessionUser) {
-  const rows = await db.classroom.findMany({ where: u.role === "ADMIN" ? {} : { teacherId: u.id }, select: { id: true } });
+  const rows = await db.classroom.findMany({ where: u.role === "ADMIN" ? {} : { OR: [{ teacherId: u.id }, { teacherId: null }] }, select: { id: true } });
   return rows.map((r) => r.id);
 }
 

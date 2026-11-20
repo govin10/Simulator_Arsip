@@ -6,7 +6,7 @@ type Student = { id: string; name: string; username: string };
 type Cls = { id: string; name: string; teacherId: string | null; teacher: string; students: Student[] };
 type Teacher = { id: string; name: string; username: string; role: string };
 
-export default function ClassManager({ classes, isAdmin, teachers }: { classes: Cls[]; isAdmin: boolean; teachers: Teacher[] }) {
+export default function ClassManager({ classes, isAdmin, teachers, myId }: { classes: Cls[]; isAdmin: boolean; teachers: Teacher[]; myId: string }) {
   const router = useRouter();
   const [msg, setMsg] = useState("");
   const [newClass, setNewClass] = useState("");
@@ -32,7 +32,7 @@ export default function ClassManager({ classes, isAdmin, teachers }: { classes: 
           <div className="mt-2 flex gap-2"><input className="input" placeholder="mis. XI MP 3" value={newClass} onChange={(e) => setNewClass(e.target.value)} /><button className="btn btn-primary">Tambah</button></div>
         </form>
         <div className="card p-4">
-          <h2 className="h2">Impor siswa dari CSV</h2>
+          <h2 className="h2">Impor siswa dari CSV (opsional)</h2>
           <p className="text-xs text-stone-500">Kolom: <code>nama,username,password,kelas</code>. Password boleh kosong (dibuat otomatis). Kelas kosong = kelas terpilih.</p>
           <div className="mt-2 flex gap-2">
             <select className="input" value={importTo} onChange={(e) => setImportTo(e.target.value)} aria-label="Kelas tujuan">{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
@@ -52,7 +52,12 @@ export default function ClassManager({ classes, isAdmin, teachers }: { classes: 
       )}
       {classes.map((c) => (
         <details key={c.id} className="card p-4" open={classes.length <= 2}>
-          <summary className="cursor-pointer"><span className="h2">{c.name}</span> <span className="muted">· {c.students.length} siswa · guru: {c.teacher}</span></summary>
+          <summary className="cursor-pointer"><span className="h2">{c.name}</span> <span className="muted">· {c.students.length} siswa · guru: {c.teacherId ? c.teacher : "belum ada"}</span></summary>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {!isAdmin && !c.teacherId && <button className="btn btn-sm" onClick={() => call("/api/teacher/classes", "PATCH", { id: c.id, claim: true })}>Jadikan kelas saya</button>}
+            {!c.students.length && <button className="btn btn-sm btn-danger" onClick={() => confirm(`Hapus kelas ${c.name}? Tugas di kelas ini ikut terhapus.`) && call(`/api/teacher/classes?id=${c.id}`, "DELETE")}>Hapus kelas kosong</button>}
+            {c.teacherId === myId && <span className="badge bg-brand-100 text-brand-800">Kelas saya</span>}
+          </div>
           {isAdmin && (
             <div className="mt-2 flex items-center gap-2 text-sm">
               <label htmlFor={`t-${c.id}`}>Guru pengampu:</label>
@@ -68,8 +73,11 @@ export default function ClassManager({ classes, isAdmin, teachers }: { classes: 
                 <tr key={s.id}>
                   <td>{s.name}</td><td className="font-mono">{s.username}</td>
                   <td className="whitespace-nowrap text-right">
+                    <select className="input inline-block w-auto py-1 text-xs" aria-label={`Pindahkan ${s.name} ke kelas`} value="" onChange={(e) => e.target.value && call(`/api/teacher/users/${s.id}`, "PATCH", { classroomId: e.target.value })}>
+                      <option value="">Pindah kelas…</option>{classes.filter((k) => k.id !== c.id).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+                    </select>{" "}
                     <button className="btn btn-sm" onClick={async () => { const j = await call(`/api/teacher/users/${s.id}`, "POST"); if (j) setMsg(`Kata sandi baru ${s.username}: ${j.password}`); }}>Reset sandi</button>{" "}
-                    <button className="btn btn-sm btn-danger" onClick={() => confirm(`Hapus akun ${s.name} beserta semua hasil praktiknya?`) && call(`/api/teacher/users/${s.id}`, "DELETE")}>Hapus</button>
+                    <button className="btn btn-sm btn-danger" onClick={() => confirm(`Hapus akun ${s.name} beserta semua tugas dan nilainya?`) && call(`/api/teacher/users/${s.id}`, "DELETE")}>Hapus</button>
                   </td>
                 </tr>
               ))}

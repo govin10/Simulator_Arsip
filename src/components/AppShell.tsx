@@ -5,15 +5,15 @@ import LogoutButton from "./LogoutButton";
 export default function AppShell({ user, children, wide }: { user: SessionUser; children: React.ReactNode; wide?: boolean }) {
   const staff = user.role !== "STUDENT";
   const nav = staff
-    ? [["/guru", "Dashboard"], ["/guru/sesi", "Sesi praktik"], ["/guru/paket", "Bank paket"], ["/guru/kelas", "Kelas & akun"]]
-    : [["/siswa", "Sesi praktik saya"]];
+    ? [["/guru", "Rekap nilai"], ["/guru/tugas", "Tugas & koreksi"], ["/guru/kelas", "Kelas & akun"]]
+    : [["/siswa", "Tugas saya"]];
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
         <div className={`mx-auto flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 ${wide ? "max-w-[1600px]" : "max-w-6xl"}`}>
           <Link href="/" className="flex items-center gap-2 font-bold text-brand-700">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-brand-600 text-xs text-white" aria-hidden>AR</span>
-            Simulator Arsip
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-brand-600 text-xs text-white" aria-hidden>TA</span>
+            Tugas Arsip
           </Link>
           <nav className="flex flex-wrap gap-1">
             {nav.map(([href, label]) => (

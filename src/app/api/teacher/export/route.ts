@@ -1,43 +1,33 @@
-import { apiHandler, apiUser, visibleClassIds } from "@/lib/auth";
-import { anonId, loadAttempts } from "@/lib/analytics";
+import { apiHandler, apiUser, HttpError, visibleClassIds } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { COMPONENTS, kindLabel, systemLabel } from "@/lib/domain";
 import { csvResponse, toCsv } from "@/lib/csv";
-import type { Scores } from "@/lib/grading";
+import { fmtWib, isLate, STATUS_LABEL } from "@/lib/tugas";
 
-// Ekspor hasil ke CSV (bisa dibuka di Excel). ?jenis=kesalahan untuk daftar kesalahan per butir.
+// Rekap nilai satu kelas: satu baris per siswa, satu kolom per tugas (bisa dibuka di Excel)
 export const GET = apiHandler(async (req: Request) => {
   const u = await apiUser(["TEACHER", "ADMIN"]);
   const sp = new URL(req.url).searchParams;
-  const allowed = await visibleClassIds(u);
-  const classIds = sp.get("kelas") ? allowed.filter((c) => c === sp.get("kelas")) : allowed;
-  const anon = sp.get("anon") === "1";
-  const rows = await loadAttempts({ classIds, sessionId: sp.get("sesi") ?? undefined });
-  const who = (r: (typeof rows)[number]) => (anon ? anonId(r.studentId) : r.student.name);
-  const stamp = new Date().toISOString().slice(0, 10);
-
-  if (sp.get("jenis") === "kesalahan") {
-    const errs = await db.errorLog.findMany({ where: { attemptId: { in: rows.map((r) => r.id) } } });
-    const byAttempt = new Map(rows.map((r) => [r.id, r]));
-    const out = [["kelas", "siswa", "sesi", "percobaan", "tahap", "kode_kesalahan", "bidang", "pesan"]];
-    for (const e of errs) { const r = byAttempt.get(e.attemptId)!; out.push([r.session.classroom.name, who(r), r.session.title, String(r.attemptNo), e.stage, e.code, e.field ?? "", e.message]); }
-    return csvResponse(`kesalahan-${stamp}.csv`, toCsv(out));
+  const kelas = sp.get("kelas") ?? "";
+  if (!(await visibleClassIds(u)).includes(kelas)) throw new HttpError(404, "Kelas tidak ditemukan.");
+  const c = await db.classroom.findUnique({
+    where: { id: kelas },
+    include: { students: { orderBy: { name: "asc" } }, assignments: { orderBy: { createdAt: "asc" }, include: { submissions: true } } },
+  });
+  if (!c) throw new HttpError(404, "Kelas tidak ditemukan.");
+  if (sp.get("detail") === "1") {
+    const rows: (string | number | null)[][] = [["kelas", "nama", "username", "tugas", "status", "nilai", "nilai_maks", "dikumpulkan", "terlambat", "jumlah_unggah", "catatan_guru"]];
+    for (const a of c.assignments) for (const s of c.students) {
+      const sub = a.submissions.find((x) => x.studentId === s.id);
+      rows.push([c.name, s.name, s.username, a.title, sub ? STATUS_LABEL[sub.status] : "Belum mengumpulkan", sub?.score ?? "", a.maxScore,
+        sub ? fmtWib(sub.submittedAt, false) : "", sub ? (isLate(a, sub.submittedAt) ? "ya" : "tidak") : "", sub?.uploadCount ?? "", sub?.feedback ?? ""]);
+    }
+    return csvResponse(`detail-${c.name.replace(/\s+/g, "-")}.csv`, toCsv(rows));
   }
-
-  const header = ["kelas", anon ? "id_anonim" : "siswa", ...(anon ? [] : ["username"]), "sesi", "jenis_sesi", "paket", "sistem", "percobaan", "status", "mulai", "selesai", "durasi_menit", "bantuan",
-    ...COMPONENTS.map((c) => `skor_${c.key}`), "skor_otomatis", "lulus_kkm", "skor_skenario", "nilai_guru", "catatan_guru",
-    "temu_kembali_benar", "temu_kembali_jumlah", "temu_kembali_rata_detik"];
-  const out: (string | number | null)[][] = [header];
-  for (const r of rows) {
-    const s = r.scores as unknown as Scores | null;
-    const rt = r.retrievals.filter((x) => x.durationMs != null);
-    out.push([
-      r.session.classroom.name, who(r), ...(anon ? [] : [r.student.username]), r.session.title, kindLabel(r.session.package.kind), r.session.package.title, systemLabel(r.session.package.system),
-      r.attemptNo, r.status === "FINISHED" ? "selesai" : r.stage, r.startedAt.toISOString(), r.finishedAt?.toISOString() ?? "",
-      r.finishedAt ? Math.round((r.finishedAt.getTime() - r.startedAt.getTime()) / 6000) / 10 : "", r.helpCount,
-      ...COMPONENTS.map((c) => s?.components[c.key]?.score ?? ""), s?.total ?? "", s ? (s.passed ? "ya" : "tidak") : "", r.scenarioScore ?? "", r.teacherScore ?? "", r.teacherNote ?? "",
-      rt.filter((x) => x.correct).length, rt.length, rt.length ? Math.round(rt.reduce((a, b) => a + (b.durationMs ?? 0), 0) / rt.length / 1000) : "",
-    ]);
+  const rows: (string | number | null)[][] = [["nama", "username", ...c.assignments.map((a) => `${a.title} (maks ${a.maxScore})`), "rata_rata"]];
+  for (const s of c.students) {
+    const scores = c.assignments.map((a) => a.submissions.find((x) => x.studentId === s.id && x.status === "GRADED")?.score ?? null);
+    const valid = scores.filter((x): x is number => x != null);
+    rows.push([s.name, s.username, ...scores.map((x) => x ?? ""), valid.length ? Math.round((valid.reduce((p, q) => p + q, 0) / valid.length) * 10) / 10 : ""]);
   }
-  return csvResponse(`hasil-praktik-${stamp}.csv`, toCsv(out));
+  return csvResponse(`nilai-${c.name.replace(/\s+/g, "-")}.csv`, toCsv(rows));
 });

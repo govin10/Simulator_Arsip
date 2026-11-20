@@ -13,196 +13,74 @@ enum Role {
   ADMIN
 }
 
-enum FilingSystem {
-  ABJAD
-  NOMOR
-  SUBJEK
-  WILAYAH
-  TANGGAL
-}
-
-enum PackageKind {
-  PRETEST
-  LATIHAN
-  POSTTEST
-}
-
-enum AttemptStatus {
-  IN_PROGRESS
-  FINISHED
+enum SubmissionStatus {
+  SUBMITTED /// sudah dikumpulkan, menunggu dinilai
+  REVISION  /// dikembalikan guru, siswa boleh mengunggah ulang
+  GRADED    /// sudah dinilai
 }
 
 model User {
-  id           String    @id @default(cuid())
-  username     String    @unique
+  id           String       @id @default(cuid())
+  username     String       @unique
   name         String
   passwordHash String
-  role         Role      @default(STUDENT)
+  role         Role         @default(STUDENT)
   classroomId  String?
-  classroom    Classroom? @relation("ClassStudents", fields: [classroomId], references: [id], onDelete: SetNull)
-  teaching     Classroom[] @relation("ClassTeacher")
-  attempts     Attempt[]
-  packages     Package[]
-  createdAt    DateTime  @default(now())
+  classroom    Classroom?   @relation("ClassStudents", fields: [classroomId], references: [id], onDelete: SetNull)
+  teaching     Classroom[]  @relation("ClassTeacher")
+  assignments  Assignment[]
+  submissions  Submission[] @relation("StudentSubmissions")
+  graded       Submission[] @relation("GradedBy")
+  createdAt    DateTime     @default(now())
 }
 
+/// Kelas. Bisa dibuat guru, atau otomatis saat siswa mendaftar (teacherId kosong = terlihat semua guru).
 model Classroom {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  teacherId String?
-  teacher   User?    @relation("ClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
-  students  User[]   @relation("ClassStudents")
-  sessions  PracticeSession[]
-  createdAt DateTime @default(now())
+  id          String       @id @default(cuid())
+  name        String       @unique
+  teacherId   String?
+  teacher     User?        @relation("ClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
+  students    User[]       @relation("ClassStudents")
+  assignments Assignment[]
+  createdAt   DateTime     @default(now())
 }
 
-/// Paket dokumen. Struktur lemari, kolom kartu kendali, bobot, dan konfigurasi
-/// skenario kesalahan disimpan sebagai JSON agar guru dapat mengubahnya lewat formulir.
-model Package {
-  id             String       @id @default(cuid())
-  title          String
-  description    String       @default("")
-  system         FilingSystem
-  lockSystem     Boolean      @default(true)
-  difficulty     Int          @default(1)
-  kind           PackageKind  @default(LATIHAN)
-  homeOrg        String       /// organisasi fiktif tempat siswa "bekerja" (penentu surat masuk/keluar)
-  homeCity       String       @default("Pasuruan")
-  cabinet        Json         /// { drawers: [{ id, label, guides: [{ id, label, folders: [{ id, label, code }] }] }] }
-  metadataFields Json         /// daftar kolom kartu kendali yang aktif
-  weights        Json         /// bobot komponen penilaian
-  scenario       Json         /// { enabled, errors: { WRONG_FOLDER: n, ... } }
-  kkm            Int          @default(75)
-  maxAttempts    Int          @default(3)
-  targetSeconds  Int          @default(120)
-  minAccuracyForTime Int      @default(60)
-  createdById    String?
-  createdBy      User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  documents      Document[]
-  retrievalTasks RetrievalTask[]
-  sessions       PracticeSession[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-}
-
-/// Dokumen fiktif + kunci jawaban (kolom key*). Kolom key* TIDAK PERNAH dikirim ke browser siswa.
-model Document {
-  id          String   @id @default(cuid())
-  packageId   String
-  package     Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  position    Int      @default(0)
-  number      String
-  date        DateTime
-  sender      String
-  senderCity  String   @default("")
-  recipient   String
-  recipientCity String @default("")
-  subject     String   /// perihal
-  nature      String   @default("Biasa") /// sifat yang tertulis di dokumen (boleh kosong untuk dokumen "tidak sempurna")
-  summary     String
-  attachment  String   @default("")
-  tricky      Boolean  @default(false) /// sengaja dibuat mirip / tidak lengkap
-
-  keyType       String   /// SURAT_MASUK | SURAT_KELUAR | MEMO | UNDANGAN | KUITANSI | LAPORAN
-  keyValue      String   /// VITAL | PENTING | BERGUNA | TIDAK_BERGUNA
-  keyCatchword  String
-  keyCatchAlt   String[] @default([])
-  keyIndex      String
-  keyIndexAlt   String[] @default([])
-  keyCode       String
-  keyCodeAlt    String[] @default([])
-  keyFolderId   String
-  keySortKey    String   @default("") /// kosong = dihitung otomatis dari aturan sistem
-  keyAccess     String   @default("BIASA") /// BIASA | TERBATAS | RAHASIA
-  keyRetention  String   @default("2 tahun")
-
-  createdAt   DateTime @default(now())
-}
-
-model RetrievalTask {
-  id         String    @id @default(cuid())
-  packageId  String
-  package    Package   @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  position   Int       @default(0)
-  prompt     String
-  answerDocumentId String? /// null = arsip memang tidak ada
-}
-
-/// Sesi praktik = paket yang diaktifkan guru untuk satu kelas.
-model PracticeSession {
-  id          String    @id @default(cuid())
+/// Tugas dari guru. Soal diberikan di kertas; di sini hanya judul, petunjuk, dan tenggat.
+model Assignment {
+  id          String       @id @default(cuid())
   title       String
-  packageId   String
-  package     Package   @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  description String       @default("")
   classroomId String
-  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-  active      Boolean   @default(true)
-  attempts    Attempt[]
-  createdAt   DateTime  @default(now())
+  classroom   Classroom    @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  dueAt       DateTime?
+  allowLate   Boolean      @default(true)
+  isOpen      Boolean      @default(true)
+  maxScore    Int          @default(100)
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  submissions Submission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
-model Attempt {
-  id          String        @id @default(cuid())
-  sessionId   String
-  session     PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  studentId   String
-  student     User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  attemptNo   Int
-  status      AttemptStatus @default(IN_PROGRESS)
-  stage       String        @default("PROCESS") /// PROCESS | STORE | RETRIEVE | SCENARIO | DONE
-  docOrder    String[]      /// urutan dokumen teracak untuk percobaan ini
-  draft       Json          @default("{}") /// autosave jawaban yang belum dikirim
-  answers     Json          @default("{}") /// jawaban final per tahap
-  results     Json          @default("{}") /// hasil pemeriksaan per tahap (butir benar/salah)
-  scenarioState Json?       /// lemari bermasalah yang dibangkitkan untuk F7 (server only)
-  helpCount   Int           @default(0)
-  scores      Json?         /// skor per komponen + akhir
-  scenarioScore Float?
-  teacherScore Float?
-  teacherNote String?
-  rubric      Json?
-  startedAt   DateTime      @default(now())
-  finishedAt  DateTime?
-  events      Event[]
-  retrievals  RetrievalResult[]
-  errors      ErrorLog[]
-}
+/// Satu pengumpulan per siswa per tugas. Unggah ulang mengganti file lama.
+model Submission {
+  id           String           @id @default(cuid())
+  assignmentId String
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User             @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+  fileKey      String           /// URL Vercel Blob atau path lokal (tidak pernah dikirim ke browser)
+  fileName     String
+  fileSize     Int
+  submittedAt  DateTime         @default(now())
+  uploadCount  Int              @default(1)
+  status       SubmissionStatus @default(SUBMITTED)
+  score        Float?
+  feedback     String?
+  gradedAt     DateTime?
+  gradedById   String?
+  gradedBy     User?            @relation("GradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
 
-model Event {
-  id        String   @id @default(cuid())
-  attemptId String
-  attempt   Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  type      String
-  payload   Json     @default("{}")
-  createdAt DateTime @default(now())
-
-  @@index([attemptId])
-}
-
-model RetrievalResult {
-  id          String   @id @default(cuid())
-  attemptId   String
-  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  taskId      String
-  shownAt     DateTime
-  answeredAt  DateTime?
-  steps       Json     @default("[]")
-  selectedDocumentId String?
-  answeredNotFound Boolean @default(false)
-  correct     Boolean?
-  wrongPicks  Int      @default(0)
-  durationMs  Int?
-
-  @@unique([attemptId, taskId])
-}
-
-model ErrorLog {
-  id         String  @id @default(cuid())
-  attemptId  String
-  attempt    Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  stage      String
-  code       String
-  documentId String?
-  field      String?
-  message    String
+  @@unique([assignmentId, studentId])
 }
