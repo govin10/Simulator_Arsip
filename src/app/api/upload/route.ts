@@ -1,7 +1,7 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { apiUser, HttpError } from "@/lib/auth";
 import { assertCanSubmit } from "@/lib/submissions";
-import { blobPrefix } from "@/lib/storage";
+import { blobPrefix, blobToken } from "@/lib/storage";
 import { MAX_PDF_BYTES } from "@/lib/tugas";
 
 // Memberi token unggah langsung ke Vercel Blob (file tidak melewati server, jadi PDF besar tetap bisa).
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const body = (await req.json()) as HandleUploadBody;
   try {
     const result = await handleUpload({
-      body, request: req,
+      body, request: req, token: blobToken(),
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         const user = await apiUser(["STUDENT"]);
         const assignmentId = String(clientPayload ?? "");
