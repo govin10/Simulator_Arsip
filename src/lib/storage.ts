@@ -9,8 +9,22 @@ import { del } from "@vercel/blob";
  */
 export function blobToken(): string | undefined {
   if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
-  for (const [k, v] of Object.entries(process.env)) if (k.endsWith("READ_WRITE_TOKEN") && v?.startsWith("vercel_blob_rw_")) return v;
-  return undefined;
+  const env = Object.entries(process.env);
+  return (
+    env.find(([, v]) => v?.startsWith("vercel_blob_rw_"))?.[1] ??
+    env.find(([k, v]) => /BLOB/i.test(k) && /READ_WRITE_TOKEN$/i.test(k) && !!v)?.[1]
+  );
+}
+
+/** Untuk kotak diagnostik guru: hanya NAMA variabel, tidak pernah isinya. */
+export function storageDiagnostics() {
+  const names = Object.keys(process.env).filter((k) => /BLOB|READ_WRITE|STORAGE/i.test(k)).sort();
+  return {
+    mode: storageMode(),
+    vercelEnv: process.env.VERCEL_ENV ?? "(bukan di Vercel)",
+    commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7) || "-",
+    names,
+  };
 }
 
 /** "blob" bila token Vercel Blob tersedia; "local" untuk percobaan di komputer sendiri. */
