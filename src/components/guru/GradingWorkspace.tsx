@@ -52,7 +52,7 @@ export default function GradingWorkspace({ rows, maxScore, features }: { rows: R
 
   return (
     <div className="mt-4 grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)_340px]">
-      <aside className="card h-fit p-2 xl:sticky xl:top-20" aria-label="Daftar siswa">
+      <aside className="card h-fit p-2 xl:sticky xl:top-4" aria-label="Daftar siswa">
         <div className="flex gap-1 p-1">
           {([["all", `Semua (${rows.length})`], ["waiting", `Belum dikoreksi (${rows.filter((r) => r.sub?.status === "SUBMITTED").length})`], ["missing", `Belum kumpul (${rows.filter((r) => !r.sub).length})`]] as const).map(([k, l]) => (
             <button key={k} onClick={() => setFilter(k)} className={`rounded-md px-2 py-1 text-xs ${filter === k ? "bg-brand-600 text-white" : "bg-stone-100 text-stone-700"}`}>{l}</button>
@@ -101,7 +101,7 @@ export default function GradingWorkspace({ rows, maxScore, features }: { rows: R
         )}
       </section>
 
-      <aside className="card h-fit p-4 xl:sticky xl:top-20" aria-label="Penilaian">
+      <aside className="card h-fit p-4 xl:sticky xl:top-4" aria-label="Penilaian">
         {cur?.sub ? (
           <>
             <h2 className="h2">{cur.name}</h2>
