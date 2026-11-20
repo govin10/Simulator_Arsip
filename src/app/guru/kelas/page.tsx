@@ -30,7 +30,10 @@ function StorageStatus() {
       <p className="font-semibold">{ok ? "✓ Penyimpanan PDF siap (Vercel Blob terhubung)" : "⚠ Penyimpanan PDF belum siap: token Vercel Blob tidak terbaca"}</p>
       <p className="mt-1 text-stone-600">Lingkungan: <strong>{d.vercelEnv}</strong> · commit <code>{d.commit}</code></p>
       <p className="mt-1 text-stone-600">Variabel terkait yang terbaca: {d.names.length ? d.names.map((n) => <code key={n} className="mr-1 rounded bg-white px-1">{n}</code>) : <em>tidak ada</em>}</p>
-      {!ok && <p className="mt-2">Hubungkan Blob ke project ini di Vercel (tab Storage → pilih store Blob → Connect Project, centang <strong>Production</strong> dan opsi read-write token), lalu <strong>Redeploy</strong>.</p>}
+      {!ok && d.names.includes("BLOB_STORE_ID") && (
+        <p className="mt-2">Blob <strong>sudah terhubung tanpa token read-write</strong>. Di Vercel: Storage → store Blob → <em>Projects</em> → Simulator_Arsip → <em>Disconnect</em>, lalu <em>Connect Project</em> lagi dengan opsi <strong>&ldquo;Add a read-write token env var&rdquo;</strong> dicentang (Production, Preview, Development). Atau salin <code>BLOB_READ_WRITE_TOKEN</code> dari halaman store ke Settings → Environment Variables. Lalu <strong>Redeploy</strong>.</p>
+      )}
+      {!ok && !d.names.includes("BLOB_STORE_ID") && <p className="mt-2">Hubungkan Blob ke project ini di Vercel (tab Storage → pilih store Blob → Connect Project, centang <strong>Production</strong> dan opsi read-write token), lalu <strong>Redeploy</strong>.</p>}
     </div>
   );
 }

@@ -43,7 +43,7 @@ export function isOurBlobUrl(url: string, assignmentId: string, studentId: strin
 }
 
 export async function saveLocal(assignmentId: string, studentId: string, data: Buffer) {
-  if (process.env.VERCEL) throw new Error("Penyimpanan file belum diatur: token Vercel Blob tidak ditemukan. Guru/admin: hubungkan Blob di tab Storage Vercel (centang Production), lalu Redeploy.");
+  if (process.env.VERCEL) throw new Error("Penyimpanan file belum diatur: token read-write Vercel Blob tidak ditemukan. Guru/admin: lihat petunjuk di halaman Kelas & akun.");
   const key = `local:${assignmentId}/${studentId}-${Date.now()}.pdf`;
   const file = path.join(LOCAL_DIR, key.slice(6));
   await mkdir(path.dirname(file), { recursive: true });
