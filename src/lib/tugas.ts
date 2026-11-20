@@ -1,5 +1,19 @@
 // Helper yang aman dipakai di browser maupun server.
 
+/** Fitur/materi kearsipan (sama dengan fitur simulator sebelumnya). Siswa memilih fitur yang dikerjakan sesuai kertas acaknya. */
+export const FEATURES = [
+  { key: "IDENTIFIKASI", label: "Identifikasi dokumen", short: "Identifikasi" },
+  { key: "KLASIFIKASI", label: "Klasifikasi arsip", short: "Klasifikasi" },
+  { key: "INDEKS_KODE", label: "Indeks & kode arsip", short: "Indeks & kode" },
+  { key: "PENYIMPANAN", label: "Penyimpanan di lemari arsip", short: "Penyimpanan" },
+  { key: "KARTU_KENDALI", label: "Kartu kendali & metadata", short: "Kartu kendali" },
+  { key: "TEMU_KEMBALI", label: "Temu kembali arsip", short: "Temu kembali" },
+  { key: "SKENARIO", label: "Skenario kesalahan arsip", short: "Skenario kesalahan" },
+] as const;
+export const FEATURE_KEYS: string[] = FEATURES.map((f) => f.key);
+export const featureLabel = (k?: string | null) => FEATURES.find((f) => f.key === k)?.label ?? (k ? k : "—");
+export const featureShort = (k?: string | null) => FEATURES.find((f) => f.key === k)?.short ?? (k ? k : "—");
+
 export const MAX_PDF_MB = 20;
 export const MAX_PDF_BYTES = MAX_PDF_MB * 1024 * 1024;
 

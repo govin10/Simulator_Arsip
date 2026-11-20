@@ -3,7 +3,7 @@ import Uploader from "@/components/siswa/Uploader";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { blobAccess, storageMode } from "@/lib/storage";
-import { STATUS_LABEL, canSubmit, fmtSize, fmtWib, isLate } from "@/lib/tugas";
+import { STATUS_LABEL, canSubmit, featureLabel, fmtSize, fmtWib, isLate } from "@/lib/tugas";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +44,8 @@ export default async function StudentHome() {
               {a.description && <p className="mt-3 whitespace-pre-line text-sm">{a.description}</p>}
 
               {sub && (
-                <div className="mt-4 rounded-lg border border-stone-200 p-3 text-sm">
+                <div className="mt-4 rounded-lg border border-brand-100 p-3 text-sm">
+                  {sub.feature && <p className="mb-1">Fitur: <span className="badge bg-brand-100 text-brand-800">{featureLabel(sub.feature)}</span></p>}
                   <p>
                     <a className="font-medium text-brand-700 underline" href={`/api/submissions/${sub.id}/file`} target="_blank" rel="noopener">📄 {sub.fileName}</a>
                     <span className="text-stone-500"> · {fmtSize(sub.fileSize)} · dikumpulkan {fmtWib(sub.submittedAt, false)}</span>
@@ -59,7 +60,7 @@ export default async function StudentHome() {
 
               <div className="mt-4">
                 {can.ok ? (
-                  <Uploader assignmentId={a.id} studentId={user.id} mode={mode} access={blobAccess()} replacing={!!sub} />
+                  <Uploader assignmentId={a.id} studentId={user.id} mode={mode} access={blobAccess()} replacing={!!sub} features={a.features} currentFeature={sub?.feature} />
                 ) : (
                   !sub && <p className="text-sm text-stone-500">{can.reason}</p>
                 )}

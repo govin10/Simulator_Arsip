@@ -1,5 +1,5 @@
 import { apiHandler, apiUser, HttpError } from "@/lib/auth";
-import { assertCanSubmit, recordSubmission } from "@/lib/submissions";
+import { assertCanSubmit, checkFeature, recordSubmission } from "@/lib/submissions";
 import { saveLocal, storageMode } from "@/lib/storage";
 import { MAX_PDF_BYTES } from "@/lib/tugas";
 
@@ -14,9 +14,10 @@ export const POST = apiHandler(async (req: Request) => {
   if (file.size > MAX_PDF_BYTES) throw new HttpError(400, "Ukuran file maksimal 20 MB.");
   const buf = Buffer.from(await file.arrayBuffer());
   if (buf.subarray(0, 5).toString("latin1") !== "%PDF-") throw new HttpError(400, "File bukan PDF yang valid.");
-  await assertCanSubmit(user, assignmentId);
+  const { a } = await assertCanSubmit(user, assignmentId);
+  checkFeature(a, form.get("feature"));
   let key: string;
   try { key = await saveLocal(assignmentId, user.id, buf); } catch (e) { throw new HttpError(500, (e as Error).message); }
-  const s = await recordSubmission(user, assignmentId, { key, name: file.name, size: file.size });
+  const s = await recordSubmission(user, assignmentId, { key, name: file.name, size: file.size }, form.get("feature"));
   return Response.json({ id: s.id });
 });

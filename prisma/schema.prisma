@@ -56,6 +56,8 @@ model Assignment {
   allowLate   Boolean      @default(true)
   isOpen      Boolean      @default(true)
   maxScore    Int          @default(100)
+  /// Fitur (materi) yang boleh dipilih siswa saat mengumpulkan. Kosong = tanpa pilihan fitur.
+  features    String[]     @default([])
   createdById String?
   createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
   submissions Submission[]
@@ -73,6 +75,8 @@ model Submission {
   fileKey      String           /// URL Vercel Blob atau path lokal (tidak pernah dikirim ke browser)
   fileName     String
   fileSize     Int
+  /// Fitur yang dikerjakan siswa (sesuai kertas acak yang diterimanya)
+  feature      String?
   submittedAt  DateTime         @default(now())
   uploadCount  Int              @default(1)
   status       SubmissionStatus @default(SUBMITTED)

@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FEATURES, FEATURE_KEYS } from "@/lib/tugas";
 
-type Init = { id?: string; title: string; description: string; dueAt: string | null; allowLate: boolean; maxScore: number; classroomIds: string[] };
+type Init = { id?: string; title: string; description: string; dueAt: string | null; allowLate: boolean; maxScore: number; classroomIds: string[]; features: string[] };
 const toLocalInput = (iso: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -15,7 +16,7 @@ export default function AssignmentForm({ classes, initial, onDone }: { classes: 
   const editing = !!initial?.id;
   const [f, setF] = useState({
     title: initial?.title ?? "", description: initial?.description ?? "", due: toLocalInput(initial?.dueAt ?? null),
-    allowLate: initial?.allowLate ?? true, maxScore: initial?.maxScore ?? 100, classroomIds: initial?.classroomIds ?? (classes.length === 1 ? [classes[0].id] : []),
+    allowLate: initial?.allowLate ?? true, maxScore: initial?.maxScore ?? 100, features: initial?.features ?? FEATURE_KEYS, classroomIds: initial?.classroomIds ?? (classes.length === 1 ? [classes[0].id] : []),
   });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -23,7 +24,7 @@ export default function AssignmentForm({ classes, initial, onDone }: { classes: 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setMsg(null);
-    const body = { title: f.title, description: f.description, dueAt: f.due ? new Date(f.due).toISOString() : null, allowLate: f.allowLate, maxScore: Number(f.maxScore), classroomIds: f.classroomIds };
+    const body = { title: f.title, description: f.description, dueAt: f.due ? new Date(f.due).toISOString() : null, allowLate: f.allowLate, maxScore: Number(f.maxScore), classroomIds: f.classroomIds, features: f.features };
     const r = await fetch(editing ? `/api/teacher/assignments/${initial!.id}` : "/api/teacher/assignments", { method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const j = await r.json();
     setBusy(false);
@@ -51,6 +52,25 @@ export default function AssignmentForm({ classes, initial, onDone }: { classes: 
           </div>
         </fieldset>
       )}
+      <fieldset className="md:col-span-2">
+        <legend className="label">Fitur yang bisa dipilih siswa</legend>
+        <p className="mb-2 text-xs text-stone-500">Siswa memilih salah satu fitur ini saat mengumpulkan, sesuai kertas acak yang diterimanya. Kosongkan semua bila tugas ini tidak dibagi per fitur.</p>
+        <div className="flex flex-wrap gap-2">
+          {FEATURES.map((ft, i) => {
+            const on = f.features.includes(ft.key);
+            return (
+              <label key={ft.key} className={`cursor-pointer rounded-lg border px-3 py-1.5 text-sm ${on ? "border-brand-600 bg-brand-50 font-medium text-brand-800" : "border-brand-200 text-stone-600"}`}>
+                <input type="checkbox" className="sr-only" checked={on} onChange={(e) => setF({ ...f, features: e.target.checked ? FEATURE_KEYS.filter((k) => k === ft.key || f.features.includes(k)) : f.features.filter((x) => x !== ft.key) })} />
+                {on ? "✓ " : ""}{i + 1}. {ft.label}
+              </label>
+            );
+          })}
+        </div>
+        <div className="mt-2 flex gap-3 text-xs">
+          <button type="button" className="text-brand-700 underline" onClick={() => setF({ ...f, features: FEATURE_KEYS })}>Pilih semua</button>
+          <button type="button" className="text-brand-700 underline" onClick={() => setF({ ...f, features: [] })}>Kosongkan</button>
+        </div>
+      </fieldset>
       <div><label className="label" htmlFor="due">Tenggat (opsional)</label><input id="due" type="datetime-local" className="input" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></div>
       <div><label className="label" htmlFor="max">Nilai maksimal</label><input id="max" type="number" min={1} max={1000} className="input" value={f.maxScore} onChange={(e) => setF({ ...f, maxScore: Number(e.target.value) })} /></div>
       <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={f.allowLate} onChange={(e) => setF({ ...f, allowLate: e.target.checked })} /> Tetap terima pengumpulan setelah tenggat (ditandai &ldquo;terlambat&rdquo;)</label>

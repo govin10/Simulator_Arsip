@@ -22,7 +22,7 @@ export default async function GradePage({ params }: { params: Promise<{ id: stri
     const sub = a.submissions.find((x) => x.studentId === s.id);
     return {
       studentId: s.id, name: s.name, username: s.username,
-      sub: sub ? { id: sub.id, fileName: sub.fileName, fileSize: sub.fileSize, submittedAt: fmtWib(sub.submittedAt, false), late: isLate(a, sub.submittedAt), uploadCount: sub.uploadCount, status: sub.status, score: sub.score, feedback: sub.feedback ?? "", gradedBy: sub.gradedBy?.name ?? null } : null,
+      sub: sub ? { feature: sub.feature, id: sub.id, fileName: sub.fileName, fileSize: sub.fileSize, submittedAt: fmtWib(sub.submittedAt, false), late: isLate(a, sub.submittedAt), uploadCount: sub.uploadCount, status: sub.status, score: sub.score, feedback: sub.feedback ?? "", gradedBy: sub.gradedBy?.name ?? null } : null,
     };
   });
   const submitted = rows.filter((r) => r.sub).length;
@@ -44,10 +44,10 @@ export default async function GradePage({ params }: { params: Promise<{ id: stri
       <details className="card mt-3 p-4">
         <summary className="cursor-pointer text-sm font-semibold">Ubah judul, petunjuk, atau tenggat</summary>
         <div className="mt-3">
-          <AssignmentForm classes={[]} initial={{ id: a.id, title: a.title, description: a.description, dueAt: a.dueAt?.toISOString() ?? null, allowLate: a.allowLate, maxScore: a.maxScore, classroomIds: [a.classroomId] }} />
+          <AssignmentForm classes={[]} initial={{ id: a.id, title: a.title, description: a.description, dueAt: a.dueAt?.toISOString() ?? null, allowLate: a.allowLate, maxScore: a.maxScore, classroomIds: [a.classroomId], features: a.features }} />
         </div>
       </details>
-      <GradingWorkspace rows={rows} maxScore={a.maxScore} />
+      <GradingWorkspace rows={rows} maxScore={a.maxScore} features={a.features} />
     </AppShell>
   );
 }

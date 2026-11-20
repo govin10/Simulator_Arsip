@@ -2,6 +2,7 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { requireUser, visibleClassIds } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { FEATURES, featureShort } from "@/lib/tugas";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,7 @@ export default async function Recap({ searchParams }: { searchParams: Promise<{ 
                             : sub.status === "GRADED" ? <strong>{sub.score}</strong>
                             : sub.status === "REVISION" ? <span className="badge bg-amber-100 text-amber-800">revisi</span>
                             : <Link href={`/guru/tugas/${a.id}`} className="badge bg-sky-100 text-sky-800">koreksi</Link>}
+                          {sub?.feature && <div className="text-[11px] text-brand-700">{featureShort(sub.feature)}</div>}
                         </td>
                       );
                     })}
@@ -82,6 +84,31 @@ export default async function Recap({ searchParams }: { searchParams: Promise<{ 
             )}
           </table>
         </div>
+      )}
+      {c && c.assignments.some((a) => a.submissions.some((x) => x.feature)) && (
+        <section className="card mt-4 overflow-x-auto p-5">
+          <h2 className="h2">Ringkasan per fitur</h2>
+          <p className="muted">Gabungan semua tugas di kelas ini, berdasarkan fitur yang dipilih siswa saat mengumpulkan.</p>
+          <table className="table mt-3">
+            <thead><tr><th>Fitur</th><th className="text-right">Dikumpulkan</th><th className="text-right">Sudah dinilai</th><th className="text-right">Rata-rata nilai</th><th>Siswa</th></tr></thead>
+            <tbody>
+              {FEATURES.map((f, i) => {
+                const subs = c.assignments.flatMap((a) => a.submissions.filter((x) => x.feature === f.key));
+                const g = subs.filter((x) => x.status === "GRADED" && x.score != null).map((x) => x.score!);
+                const names = [...new Set(subs.map((x) => c.students.find((st) => st.id === x.studentId)?.name).filter(Boolean))];
+                return (
+                  <tr key={f.key}>
+                    <td className="font-medium">{i + 1}. {f.label}</td>
+                    <td className="text-right tabular-nums">{subs.length}</td>
+                    <td className="text-right tabular-nums">{g.length}</td>
+                    <td className="text-right font-semibold tabular-nums">{avg(g) ?? "—"}</td>
+                    <td className="text-xs text-stone-600">{names.join(", ") || "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </section>
       )}
     </AppShell>
   );

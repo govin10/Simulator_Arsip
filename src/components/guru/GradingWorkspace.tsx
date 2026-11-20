@@ -1,19 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { STATUS_LABEL, fmtSize } from "@/lib/tugas";
+import { FEATURES, STATUS_LABEL, featureLabel, featureShort, fmtSize } from "@/lib/tugas";
 
 type Row = {
   studentId: string; name: string; username: string;
-  sub: { id: string; fileName: string; fileSize: number; submittedAt: string; late: boolean; uploadCount: number; status: string; score: number | null; feedback: string; gradedBy: string | null } | null;
+  sub: { feature: string | null; id: string; fileName: string; fileSize: number; submittedAt: string; late: boolean; uploadCount: number; status: string; score: number | null; feedback: string; gradedBy: string | null } | null;
 };
 
-export default function GradingWorkspace({ rows, maxScore }: { rows: Row[]; maxScore: number }) {
+export default function GradingWorkspace({ rows, maxScore, features }: { rows: Row[]; maxScore: number; features: string[] }) {
   const router = useRouter();
   const withSub = rows.filter((r) => r.sub);
   const firstWaiting = withSub.find((r) => r.sub!.status === "SUBMITTED") ?? withSub[0];
   const [sel, setSel] = useState<string | null>(firstWaiting?.studentId ?? null);
   const [filter, setFilter] = useState<"all" | "waiting" | "missing">("all");
+  const [ft, setFt] = useState("");
   const cur = rows.find((r) => r.studentId === sel)?.sub ? rows.find((r) => r.studentId === sel)! : null;
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -27,7 +28,9 @@ export default function GradingWorkspace({ rows, maxScore }: { rows: Row[]; maxS
     setMsg(null);
   }, [cur?.studentId, cur?.sub?.id, cur?.sub?.submittedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const shown = rows.filter((r) => (filter === "waiting" ? r.sub?.status === "SUBMITTED" : filter === "missing" ? !r.sub : true));
+  const shown = rows
+    .filter((r) => (filter === "waiting" ? r.sub?.status === "SUBMITTED" : filter === "missing" ? !r.sub : true))
+    .filter((r) => !ft || r.sub?.feature === ft);
   const nextId = () => {
     const i = withSub.findIndex((r) => r.studentId === sel);
     const after = [...withSub.slice(i + 1), ...withSub.slice(0, i)];
@@ -55,12 +58,21 @@ export default function GradingWorkspace({ rows, maxScore }: { rows: Row[]; maxS
             <button key={k} onClick={() => setFilter(k)} className={`rounded-md px-2 py-1 text-xs ${filter === k ? "bg-brand-600 text-white" : "bg-stone-100 text-stone-700"}`}>{l}</button>
           ))}
         </div>
+        {features.length > 0 && (
+          <select className="input mt-1 py-1 text-xs" aria-label="Filter fitur" value={ft} onChange={(e) => setFt(e.target.value)}>
+            <option value="">Semua fitur</option>
+            {FEATURES.filter((f) => features.includes(f.key)).map((f) => <option key={f.key} value={f.key}>{f.label} ({rows.filter((r) => r.sub?.feature === f.key).length})</option>)}
+          </select>
+        )}
         <ul className="mt-1 max-h-[70vh] overflow-auto">
           {shown.map((r) => (
             <li key={r.studentId}>
               <button disabled={!r.sub} onClick={() => setSel(r.studentId)}
                 className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${sel === r.studentId ? "bg-brand-50 ring-1 ring-brand-500" : r.sub ? "hover:bg-brand-50" : "cursor-default opacity-60"}`}>
-                <span className="min-w-0 truncate">{r.name}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">{r.name}</span>
+                  {r.sub?.feature && <span className="block truncate text-[11px] text-brand-700">{featureShort(r.sub.feature)}</span>}
+                </span>
                 <span className="shrink-0 text-xs">
                   {!r.sub ? <span className="text-stone-500">belum</span>
                     : r.sub.status === "GRADED" ? <strong className="text-brand-700">{r.sub.score}</strong>
@@ -94,6 +106,7 @@ export default function GradingWorkspace({ rows, maxScore }: { rows: Row[]; maxS
           <>
             <h2 className="h2">{cur.name}</h2>
             <p className="text-xs text-stone-500">@{cur.username} · dikumpulkan {cur.sub.submittedAt}{cur.sub.uploadCount > 1 ? ` · unggahan ke-${cur.sub.uploadCount}` : ""}</p>
+            {cur.sub.feature && <p className="mt-2"><span className="badge bg-brand-100 px-2.5 py-1 text-sm text-brand-800">Fitur: {featureLabel(cur.sub.feature)}</span></p>}
             <p className="mt-1 text-sm">Status: <strong>{STATUS_LABEL[cur.sub.status]}</strong>{cur.sub.late && <span className="badge ml-2 bg-amber-100 text-amber-800">Terlambat</span>}</p>
             {cur.sub.gradedBy && <p className="text-xs text-stone-500">Terakhir oleh {cur.sub.gradedBy}</p>}
             <label className="label mt-4" htmlFor="score">Nilai (0–{maxScore})</label>

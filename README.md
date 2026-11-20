@@ -5,13 +5,15 @@ Website untuk kelas XI Manajemen Perkantoran SMK Negeri 1 Pasuruan. Soal diberik
 ## Alur
 **Siswa**
 1. *Daftar* (nama, kelas, username, kata sandi). Kelas yang belum ada dibuat otomatis; penulisan dirapikan (`xi mp1` → `XI MP 1`).
-2. Melihat tugas kelasnya beserta tenggat, mengunggah PDF (maks. 20 MB, ada progress bar, bisa dari HP).
+2. Melihat tugas kelasnya beserta tenggat, **memilih fitur yang dikerjakan** sesuai kertas acak yang diterimanya, lalu mengunggah PDF (maks. 20 MB, ada progress bar, bisa dari HP).
 3. Melihat nilai dan catatan guru. Bila guru *mengembalikan untuk revisi*, siswa bisa mengunggah ulang.
 
 **Guru**
-1. *Tugas & koreksi* → buat tugas (judul, petunjuk, tenggat, nilai maksimal, terima terlambat atau tidak) untuk satu atau beberapa kelas sekaligus.
+1. *Tugas & koreksi* → buat tugas (judul, petunjuk, **fitur yang bisa dipilih siswa**, tenggat, nilai maksimal, terima terlambat atau tidak) untuk satu atau beberapa kelas sekaligus.
 2. Buka tugas → daftar siswa (sudah/belum kumpul, terlambat) → PDF tampil di halaman → isi nilai & catatan → *Simpan & berikutnya* (atau tekan Enter). Bisa *Kembalikan untuk revisi*.
-3. *Rekap nilai* → tabel siswa × tugas per kelas, rata-rata, ekspor CSV (bisa dibuka di Excel).
+3. *Rekap nilai* → tabel siswa × tugas per kelas (dengan fitur yang dikerjakan), **ringkasan per fitur**, ekspor CSV (bisa dibuka di Excel).
+
+**Fitur** (sama dengan fitur simulator sebelumnya): 1. Identifikasi dokumen · 2. Klasifikasi arsip · 3. Indeks & kode arsip · 4. Penyimpanan di lemari arsip · 5. Kartu kendali & metadata · 6. Temu kembali arsip · 7. Skenario kesalahan arsip. Guru membagikan kertas soal acak; siswa memilih fitur yang sesuai saat mengumpulkan. Fitur yang tidak dicentang di tugas tidak bisa dipilih siswa (diperiksa juga di server).
 4. *Kelas & akun* → pindahkan siswa yang salah kelas, hapus kelas kosong (salah ketik), reset kata sandi, hapus akun.
 
 File PDF hanya bisa dibuka oleh siswa pemiliknya dan guru kelasnya; alamat asli file tidak ditampilkan di halaman.

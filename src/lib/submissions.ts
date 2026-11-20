@@ -15,13 +15,22 @@ export async function assertCanSubmit(user: SessionUser, assignmentId: string) {
   return { a, sub };
 }
 
-export async function recordSubmission(user: SessionUser, assignmentId: string, file: { key: string; name: string; size: number }) {
-  const { sub } = await assertCanSubmit(user, assignmentId);
+/** Fitur wajib dipilih bila tugas memakai fitur, dan harus salah satu fitur tugas itu. */
+export function checkFeature(a: { features: string[] }, feature: unknown): string | null {
+  if (!a.features.length) return null;
+  const f = String(feature ?? "");
+  if (!a.features.includes(f)) throw new HttpError(400, "Pilih fitur yang kamu kerjakan sesuai kertas yang kamu terima.");
+  return f;
+}
+
+export async function recordSubmission(user: SessionUser, assignmentId: string, file: { key: string; name: string; size: number }, featureIn?: unknown) {
+  const { a, sub } = await assertCanSubmit(user, assignmentId);
+  const feature = checkFeature(a, featureIn);
   const name = file.name.replace(/[^\p{L}\p{N} ._()-]/gu, "_").slice(0, 120) || "tugas.pdf";
   const saved = await db.submission.upsert({
     where: { assignmentId_studentId: { assignmentId, studentId: user.id } },
-    create: { assignmentId, studentId: user.id, fileKey: file.key, fileName: name, fileSize: file.size },
-    update: { fileKey: file.key, fileName: name, fileSize: file.size, submittedAt: new Date(), uploadCount: { increment: 1 }, status: "SUBMITTED" },
+    create: { assignmentId, studentId: user.id, fileKey: file.key, fileName: name, fileSize: file.size, feature },
+    update: { feature, fileKey: file.key, fileName: name, fileSize: file.size, submittedAt: new Date(), uploadCount: { increment: 1 }, status: "SUBMITTED" },
   });
   if (sub && sub.fileKey !== file.key) await deleteFile(sub.fileKey);
   return saved;

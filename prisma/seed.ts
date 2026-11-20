@@ -2,6 +2,7 @@
  * Dengan --if-empty (dipakai saat build Vercel) seed dilewati bila database sudah berisi akun. */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { FEATURE_KEYS } from "../src/lib/tugas";
 
 const db = new PrismaClient();
 
@@ -19,8 +20,8 @@ async function main() {
   await db.user.create({ data: { username: "siswa01", name: "Siswa Contoh", role: "STUDENT", classroomId: k1.id, passwordHash: hash("siswa123") } });
   await db.assignment.create({
     data: {
-      title: "Tugas 1 – Sistem penyimpanan abjad", classroomId: k1.id, createdById: guru.id, maxScore: 100,
-      description: "Kerjakan soal pada lembar yang dibagikan guru. Tulis nama dan kelas di setiap halaman, lalu pindai semua halaman menjadi satu file PDF.",
+      title: "Tugas 1 – Praktik kearsipan", classroomId: k1.id, features: FEATURE_KEYS, createdById: guru.id, maxScore: 100,
+      description: "Kerjakan soal sesuai kertas acak yang kamu terima. Tulis nama, kelas, dan fitur di setiap halaman, lalu pindai menjadi satu file PDF dan pilih fitur yang sesuai saat mengumpulkan.",
       dueAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
     },
   });

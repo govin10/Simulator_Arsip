@@ -40,7 +40,7 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
               const waiting = a.submissions.filter((s) => s.status === "SUBMITTED").length;
               return (
                 <tr key={a.id}>
-                  <td><Link href={`/guru/tugas/${a.id}`} className="font-medium text-brand-700 underline">{a.title}</Link></td>
+                  <td><Link href={`/guru/tugas/${a.id}`} className="font-medium text-brand-700 underline">{a.title}</Link>{a.features.length > 0 && <div className="text-xs text-stone-500">{a.features.length} fitur dipilih siswa</div>}</td>
                   <td>{a.classroom.name}</td>
                   <td className="whitespace-nowrap text-sm">{a.dueAt ? fmtWib(a.dueAt, false) : "—"}</td>
                   <td className="text-right tabular-nums">{a.submissions.length}/{a.classroom._count.students}</td>

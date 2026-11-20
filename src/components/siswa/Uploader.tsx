@@ -2,14 +2,16 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
-import { MAX_PDF_BYTES, MAX_PDF_MB, fmtSize } from "@/lib/tugas";
+import { FEATURES, MAX_PDF_BYTES, MAX_PDF_MB, fmtSize } from "@/lib/tugas";
 
-export default function Uploader({ assignmentId, studentId, mode, access, replacing }: { assignmentId: string; studentId: string; mode: "blob" | "local"; access: "public" | "private"; replacing: boolean }) {
+export default function Uploader({ assignmentId, studentId, mode, access, replacing, features, currentFeature }: { assignmentId: string; studentId: string; mode: "blob" | "local"; access: "public" | "private"; replacing: boolean; features: string[]; currentFeature?: string | null }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [pct, setPct] = useState<number | null>(null);
   const [err, setErr] = useState("");
+  const [feature, setFeature] = useState(currentFeature && features.includes(currentFeature) ? currentFeature : "");
+  const needFeature = features.length > 0;
 
   function pick(f?: File) {
     setErr("");
@@ -21,21 +23,23 @@ export default function Uploader({ assignmentId, studentId, mode, access, replac
 
   async function send() {
     if (!file) return;
+    if (needFeature && !feature) return setErr("Pilih dulu fitur yang kamu kerjakan (lihat kertas soalmu).");
     setErr(""); setPct(0);
     try {
       if (mode === "blob") {
         const safe = file.name.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/(\.pdf)?$/i, ".pdf");
         const blob = await upload(`tugas/${assignmentId}/${studentId}/${safe}`, file, {
-          access, handleUploadUrl: "/api/upload", clientPayload: assignmentId, contentType: "application/pdf", multipart: file.size > 5 * 1024 * 1024,
+          access, handleUploadUrl: "/api/upload", clientPayload: JSON.stringify({ assignmentId, feature }), contentType: "application/pdf", multipart: file.size > 5 * 1024 * 1024,
           onUploadProgress: (e) => setPct(Math.round(e.percentage)),
         });
-        const r = await fetch("/api/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentId, url: blob.url, fileName: file.name }) });
+        const r = await fetch("/api/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentId, url: blob.url, fileName: file.name, feature }) });
         if (!r.ok) throw new Error((await r.json()).error);
       } else {
         await new Promise<void>((resolve, reject) => {
           const fd = new FormData();
           fd.append("assignmentId", assignmentId);
           fd.append("file", file);
+          if (feature) fd.append("feature", feature);
           const x = new XMLHttpRequest();
           x.open("POST", "/api/submissions/local");
           x.upload.onprogress = (e) => e.lengthComputable && setPct(Math.round((e.loaded / e.total) * 100));
@@ -55,6 +59,15 @@ export default function Uploader({ assignmentId, studentId, mode, access, replac
 
   return (
     <div className="rounded-lg border border-dashed border-stone-300 bg-brand-50 p-3">
+      {needFeature && (
+        <div className="mb-3">
+          <label className="label" htmlFor={`ft-${assignmentId}`}>Fitur yang kamu kerjakan</label>
+          <select id={`ft-${assignmentId}`} className="input" value={feature} onChange={(e) => setFeature(e.target.value)} disabled={pct !== null}>
+            <option value="">— pilih sesuai kertas soalmu —</option>
+            {FEATURES.filter((ft) => features.includes(ft.key)).map((ft) => <option key={ft.key} value={ft.key}>{FEATURES.indexOf(ft) + 1}. {ft.label}</option>)}
+          </select>
+        </div>
+      )}
       <label className="label" htmlFor={`f-${assignmentId}`}>{replacing ? "Unggah ulang (mengganti file lama)" : "Unggah jawaban (PDF)"}</label>
       <input ref={input} id={`f-${assignmentId}`} type="file" accept="application/pdf,.pdf" className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
         onChange={(e) => pick(e.target.files?.[0])} disabled={pct !== null} />
@@ -66,7 +79,7 @@ export default function Uploader({ assignmentId, studentId, mode, access, replac
         </div>
       )}
       {err && <p className="mt-2 rounded bg-red-50 p-2 text-sm text-red-700" role="alert">{err}</p>}
-      <button className="btn btn-primary mt-3 w-full sm:w-auto" disabled={!file || pct !== null} onClick={send}>{pct !== null ? "Mengunggah…" : "Kumpulkan"}</button>
+      <button className="btn btn-primary mt-3 w-full sm:w-auto" disabled={!file || pct !== null || (needFeature && !feature)} onClick={send}>{pct !== null ? "Mengunggah…" : "Kumpulkan"}</button>
       <p className="mt-2 text-xs text-stone-500">Maks. {MAX_PDF_MB} MB. Foto kertas jawaban bisa dijadikan PDF dengan aplikasi pemindai di HP (mis. fitur &ldquo;Pindai dokumen&rdquo; di Google Drive).</p>
     </div>
   );

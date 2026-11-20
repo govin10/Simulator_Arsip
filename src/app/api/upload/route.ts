@@ -1,6 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { apiUser, HttpError } from "@/lib/auth";
-import { assertCanSubmit } from "@/lib/submissions";
+import { assertCanSubmit, checkFeature } from "@/lib/submissions";
 import { blobPrefix, blobToken } from "@/lib/storage";
 import { MAX_PDF_BYTES } from "@/lib/tugas";
 
@@ -12,8 +12,10 @@ export async function POST(req: Request) {
       body, request: req, token: blobToken(),
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         const user = await apiUser(["STUDENT"]);
-        const assignmentId = String(clientPayload ?? "");
-        await assertCanSubmit(user, assignmentId);
+        let assignmentId = "", feature: unknown = null;
+        try { ({ assignmentId, feature } = JSON.parse(String(clientPayload ?? "{}"))); } catch { assignmentId = String(clientPayload ?? ""); }
+        const { a } = await assertCanSubmit(user, assignmentId);
+        checkFeature(a, feature);
         if (!pathname.startsWith(blobPrefix(assignmentId, user.id))) throw new HttpError(400, "Lokasi file tidak valid.");
         return { allowedContentTypes: ["application/pdf"], maximumSizeInBytes: MAX_PDF_BYTES, addRandomSuffix: true };
       },
