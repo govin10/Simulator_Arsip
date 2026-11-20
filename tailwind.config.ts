@@ -4,9 +4,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: { 50: "#eef6f3", 100: "#d5e9e1", 500: "#2f7a62", 600: "#256552", 700: "#1d5142", 900: "#10302a" },
-        kayu: { 100: "#f3e8d6", 300: "#d9b98a", 500: "#a87a45", 700: "#6e4c26" },
-      },
+        brand: { 50: "#fdf2f7", 100: "#fbe3ee", 200: "#f6c9dc", 500: "#d6709e", 600: "#b84a7c", 700: "#9c3a67", 800: "#7f2f54", 900: "#5a2340" },
+        blush: "#fdf6f9",
+              },
       fontFamily: { sans: ["var(--font-sans)", "system-ui", "sans-serif"] },
     },
   },

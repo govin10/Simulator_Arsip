@@ -9,7 +9,7 @@ export default function AppShell({ user, children, wide }: { user: SessionUser; 
     : [["/siswa", "Tugas saya"]];
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-brand-100 bg-white/95 backdrop-blur">
         <div className={`mx-auto flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 ${wide ? "max-w-[1600px]" : "max-w-6xl"}`}>
           <Link href="/" className="flex items-center gap-2 font-bold text-brand-700">
             <span className="grid h-7 w-7 place-items-center rounded-md bg-brand-600 text-xs text-white" aria-hidden>TA</span>
@@ -17,7 +17,7 @@ export default function AppShell({ user, children, wide }: { user: SessionUser; 
           </Link>
           <nav className="flex flex-wrap gap-1">
             {nav.map(([href, label]) => (
-              <Link key={href} href={href} className="rounded-md px-2.5 py-1.5 text-sm text-stone-700 hover:bg-stone-100">{label}</Link>
+              <Link key={href} href={href} className="rounded-md px-2.5 py-1.5 text-sm text-stone-700 hover:bg-brand-50">{label}</Link>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">

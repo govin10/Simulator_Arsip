@@ -59,7 +59,7 @@ export default function GradingWorkspace({ rows, maxScore }: { rows: Row[]; maxS
           {shown.map((r) => (
             <li key={r.studentId}>
               <button disabled={!r.sub} onClick={() => setSel(r.studentId)}
-                className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${sel === r.studentId ? "bg-brand-50 ring-1 ring-brand-500" : r.sub ? "hover:bg-stone-50" : "cursor-default opacity-60"}`}>
+                className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${sel === r.studentId ? "bg-brand-50 ring-1 ring-brand-500" : r.sub ? "hover:bg-brand-50" : "cursor-default opacity-60"}`}>
                 <span className="min-w-0 truncate">{r.name}</span>
                 <span className="shrink-0 text-xs">
                   {!r.sub ? <span className="text-stone-500">belum</span>

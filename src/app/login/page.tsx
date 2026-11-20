@@ -18,17 +18,17 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl md:grid-cols-2">
-        <div className="hidden flex-col justify-between bg-brand-900 p-8 text-brand-50 md:flex">
+        <div className="hidden flex-col justify-between bg-gradient-to-br from-brand-500 to-brand-700 p-8 text-white md:flex">
           <div>
             <div className="mb-6 flex gap-1.5" aria-hidden>
               {["PDF", "✓", "90"].map((l) => (
-                <div key={l} className="flex h-16 w-14 flex-col items-center justify-center rounded-md border border-kayu-300/40 bg-kayu-700/60 text-sm font-bold text-kayu-100">{l}</div>
+                <div key={l} className="flex h-16 w-14 flex-col items-center justify-center rounded-md border border-white/40 bg-white/20 text-sm font-bold text-white">{l}</div>
               ))}
             </div>
             <h1 className="text-2xl font-bold leading-tight">Pengumpulan Tugas Kearsipan</h1>
-            <p className="mt-3 text-sm text-brand-100">Kerjakan soal dari guru di kertas, foto atau pindai menjadi PDF, lalu kumpulkan di sini. Nilai dan catatan guru bisa kamu lihat kapan saja.</p>
+            <p className="mt-3 text-sm text-brand-50">Kerjakan soal dari guru di kertas, foto atau pindai menjadi PDF, lalu kumpulkan di sini. Nilai dan catatan guru bisa kamu lihat kapan saja.</p>
           </div>
-          <p className="text-xs text-brand-100/80">Kelas XI Manajemen Perkantoran · SMK Negeri 1 Pasuruan</p>
+          <p className="text-xs text-brand-50/90">Kelas XI Manajemen Perkantoran · SMK Negeri 1 Pasuruan</p>
         </div>
         <form onSubmit={submit} className="space-y-4 p-8">
           <h2 className="h1">Masuk</h2>

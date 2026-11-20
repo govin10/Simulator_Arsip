@@ -29,8 +29,8 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
       </details>
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <span className="text-sm text-stone-600">Filter kelas:</span>
-        <Link href="/guru/tugas" className={`badge px-3 py-1 ${!kelas ? "bg-brand-600 text-white" : "bg-stone-200 text-stone-700"}`}>Semua</Link>
-        {classes.map((c) => <Link key={c.id} href={`/guru/tugas?kelas=${c.id}`} className={`badge px-3 py-1 ${kelas === c.id ? "bg-brand-600 text-white" : "bg-stone-200 text-stone-700"}`}>{c.name}</Link>)}
+        <Link href="/guru/tugas" className={`badge px-3 py-1 ${!kelas ? "bg-brand-600 text-white" : "bg-brand-100 text-brand-800"}`}>Semua</Link>
+        {classes.map((c) => <Link key={c.id} href={`/guru/tugas?kelas=${c.id}`} className={`badge px-3 py-1 ${kelas === c.id ? "bg-brand-600 text-white" : "bg-brand-100 text-brand-800"}`}>{c.name}</Link>)}
       </div>
       <div className="card mt-3 overflow-x-auto">
         <table className="table">

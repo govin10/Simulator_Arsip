@@ -25,6 +25,7 @@ export default async function ClassesPage() {
 function StorageStatus() {
   const d = storageDiagnostics();
   const ok = d.mode === "blob";
+  if (ok) return null; // hanya ditampilkan bila penyimpanan bermasalah
   return (
     <div className={`card mt-5 p-4 text-sm ${ok ? "" : "border-amber-400 bg-amber-50"}`}>
       <p className="font-semibold">{ok ? "✓ Penyimpanan PDF siap (Vercel Blob terhubung)" : "⚠ Penyimpanan PDF belum siap: token Vercel Blob tidak terbaca"}</p>

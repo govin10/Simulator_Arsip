@@ -54,7 +54,7 @@ export default function Uploader({ assignmentId, studentId, mode, access, replac
   }
 
   return (
-    <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50 p-3">
+    <div className="rounded-lg border border-dashed border-stone-300 bg-brand-50 p-3">
       <label className="label" htmlFor={`f-${assignmentId}`}>{replacing ? "Unggah ulang (mengganti file lama)" : "Unggah jawaban (PDF)"}</label>
       <input ref={input} id={`f-${assignmentId}`} type="file" accept="application/pdf,.pdf" className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
         onChange={(e) => pick(e.target.files?.[0])} disabled={pct !== null} />

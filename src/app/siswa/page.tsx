@@ -53,7 +53,7 @@ export default async function StudentHome() {
                   {sub.status === "GRADED" && (
                     <p className="mt-2 text-base">Nilai: <strong className="text-2xl">{sub.score}</strong> <span className="text-stone-500">/ {a.maxScore}</span></p>
                   )}
-                  {sub.feedback && <p className={`mt-2 whitespace-pre-line rounded p-2 ${sub.status === "REVISION" ? "bg-amber-50 text-amber-900" : "bg-stone-50"}`}><strong>Catatan guru:</strong> {sub.feedback}</p>}
+                  {sub.feedback && <p className={`mt-2 whitespace-pre-line rounded p-2 ${sub.status === "REVISION" ? "bg-amber-50 text-amber-900" : "bg-brand-50"}`}><strong>Catatan guru:</strong> {sub.feedback}</p>}
                 </div>
               )}
 
@@ -73,7 +73,7 @@ export default async function StudentHome() {
 }
 
 function Badge({ status }: { status?: string }) {
-  if (!status) return <span className="badge bg-stone-200 text-stone-700">Belum dikumpulkan</span>;
+  if (!status) return <span className="badge bg-brand-100 text-brand-800">Belum dikumpulkan</span>;
   const c = status === "GRADED" ? "bg-brand-100 text-brand-800" : status === "REVISION" ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-800";
   return <span className={`badge ${c}`}>{STATUS_LABEL[status]}</span>;
 }

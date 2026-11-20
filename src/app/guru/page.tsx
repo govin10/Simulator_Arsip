@@ -32,14 +32,14 @@ export default async function Recap({ searchParams }: { searchParams: Promise<{ 
         )}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {classes.map((k) => <Link key={k.id} href={`/guru?kelas=${k.id}`} className={`badge px-3 py-1 text-sm ${k.id === classId ? "bg-brand-600 text-white" : "bg-stone-200 text-stone-700"}`}>{k.name}</Link>)}
+        {classes.map((k) => <Link key={k.id} href={`/guru?kelas=${k.id}`} className={`badge px-3 py-1 text-sm ${k.id === classId ? "bg-brand-600 text-white" : "bg-brand-100 text-brand-800"}`}>{k.name}</Link>)}
       </div>
       {c && (
         <div className="card mt-4 overflow-x-auto">
           <table className="table">
             <thead>
               <tr>
-                <th className="sticky left-0 bg-stone-50">Siswa</th>
+                <th className="sticky left-0 bg-brand-50">Siswa</th>
                 {c.assignments.map((a) => <th key={a.id} className="min-w-[110px] text-center normal-case"><Link href={`/guru/tugas/${a.id}`} className="text-brand-700 underline">{a.title}</Link><div className="font-normal text-stone-500">maks {a.maxScore}</div></th>)}
                 <th className="text-right">Rata-rata</th>
               </tr>
@@ -71,12 +71,12 @@ export default async function Recap({ searchParams }: { searchParams: Promise<{ 
             {c.students.length > 0 && c.assignments.length > 0 && (
               <tfoot>
                 <tr>
-                  <td className="sticky left-0 bg-stone-50 px-3 py-2 text-sm font-semibold">Terkumpul / rata-rata</td>
+                  <td className="sticky left-0 bg-brand-50 px-3 py-2 text-sm font-semibold">Terkumpul / rata-rata</td>
                   {c.assignments.map((a) => {
                     const g = a.submissions.filter((x) => x.status === "GRADED" && x.score != null).map((x) => x.score!);
-                    return <td key={a.id} className="bg-stone-50 px-3 py-2 text-center text-sm">{a.submissions.length}/{c.students.length}<div className="font-semibold">{avg(g) ?? "—"}</div></td>;
+                    return <td key={a.id} className="bg-brand-50 px-3 py-2 text-center text-sm">{a.submissions.length}/{c.students.length}<div className="font-semibold">{avg(g) ?? "—"}</div></td>;
                   })}
-                  <td className="bg-stone-50" />
+                  <td className="bg-brand-50" />
                 </tr>
               </tfoot>
             )}
